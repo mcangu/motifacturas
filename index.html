@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generador de Facturas</title>
+    <!-- Materialize CSS para Material Design -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+      rel="stylesheet"
+    />
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        padding: 20px;
+      }
+      #logo-preview {
+        width: 150px;
+      }
+      .pdf-logo {
+        width: 50px;
+      }
+      .logo-empresarial {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .logo-empresarial img {
+        max-width: 200px;
+        height: auto;
+      }
+      .factura-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .factura-actions i {
+        cursor: pointer;
+        margin-left: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Contenedor para el logo empresarial -->
+      <div class="logo-empresarial">
+        <img src="URL_DEL_LOGO_EMPRESARIAL" alt="Logo Empresarial" />
+      </div>
+
+      <h3 class="center-align">Generador de Facturas</h3>
+      <div class="row">
+        <div class="col s12">
+          <ul class="tabs">
+            <li class="tab col s6"><a href="#formulario">Formulario</a></li>
+            <li class="tab col s6">
+              <a href="#listado-facturas">Listado de Facturas</a>
+            </li>
+          </ul>
+        </div>
+        <!-- Tab de Formulario -->
+        <div id="formulario" class="col s12">
+          <h5>Generar Nueva Factura</h5>
+          <form id="facturaForm">
+            <!-- Sección de Proveedor -->
+            <h6>Datos del Proveedor</h6>
+            <div class="input-field">
+              <input id="nombre_empresa" type="text" required />
+              <label for="nombre_empresa">Nombre de la Empresa</label>
+            </div>
+            <div class="input-field">
+              <input id="cif_empresa" type="text" required />
+              <label for="cif_empresa">CIF</label>
+            </div>
+            <div class="input-field">
+              <input id="direccion_empresa" type="text" required />
+              <label for="direccion_empresa">Dirección</label>
+            </div>
+            <div class="input-field">
+              <input id="correo_empresa" type="email" required />
+              <label for="correo_empresa">Correo</label>
+            </div>
+            <div class="input-field">
+              <input id="web_empresa" type="url" />
+              <label for="web_empresa">Página Web</label>
+            </div>
+
+            <!-- Sección de Cliente -->
+            <h6>Datos del Cliente</h6>
+            <div class="input-field">
+              <input id="nombre_cliente" type="text" required />
+              <label for="nombre_cliente">Nombre del Cliente</label>
+            </div>
+            <div class="input-field">
+              <input id="cif_cliente" type="text" required />
+              <label for="cif_cliente">CIF del Cliente</label>
+            </div>
+
+            <!-- Sección de Venta -->
+            <h6>Datos de la Venta</h6>
+            <div class="input-field">
+              <input id="numero_factura" type="text" required />
+              <label for="numero_factura">Número de Factura</label>
+            </div>
+            <div class="input-field">
+              <input id="articulo" type="text" required />
+              <label for="articulo">Artículo</label>
+            </div>
+            <div class="input-field">
+              <input id="cantidad" type="number" required />
+              <label for="cantidad">Cantidad</label>
+            </div>
+            <div class="input-field">
+              <input id="precio" type="number" step="0.01" required />
+              <label for="precio">Precio Unitario (€)</label>
+            </div>
+            <div class="input-field">
+              <input id="impuesto" type="number" step="0.01" required />
+              <label for="impuesto">Impuesto (%)</label>
+            </div>
+
+            <!-- Campo para la Fecha de Factura -->
+            <div class="input-field">
+              <input id="fecha_factura" type="date" required />
+              <label for="fecha_factura">Fecha de Factura</label>
+            </div>
+
+            <!-- Logo -->
+            <div class="file-field input-field">
+              <div class="btn">
+                <span>Subir Logo</span>
+                <input type="file" id="logo_empresa" accept="image/png" />
+              </div>
+              <div class="file-path-wrapper">
+                <input class="file-path validate" type="text" />
+              </div>
+            </div>
+
+            <div class="center">
+              <button type="submit" class="btn waves-effect waves-light">
+                Generar Factura
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tab de Listado de Facturas -->
+        <div id="listado-facturas" class="col s12">
+          <h5>Listado de Facturas</h5>
+          <ul id="lista-facturas" class="collection">
+            <!-- Aquí se mostrarán las facturas generadas -->
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Materialize JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <!-- jsPDF para generar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Inicializar las tabs
+        const elems = document.querySelectorAll(".tabs");
+        M.Tabs.init(elems);
+
+        // Cargar facturas desde localStorage
+        const facturas = JSON.parse(localStorage.getItem("facturas")) || [];
+        let logoDataURL = "";
+        let logoDimensions = { width: 0, height: 0 };
+
+        // Función para mostrar las facturas en el listado
+        function mostrarFacturas() {
+          const listaFacturas = document.getElementById("lista-facturas");
+          listaFacturas.innerHTML = "";
+
+          facturas.forEach((factura, index) => {
+            const li = document.createElement("li");
+            li.className = "collection-item factura-item";
+            li.innerHTML = `
+            <span><strong>Factura ${factura.numeroFactura}</strong> - ${
+              factura.nombreCliente
+            } - Total: ${factura.total.toFixed(2)} €</span>
+            <div class="factura-actions">
+              <i class="material-icons" onclick="editarFactura(${index})" title="Editar">edit</i>
+              <i class="material-icons red-text" onclick="eliminarFactura(${index})" title="Eliminar">delete</i>
+              <i class="material-icons blue-text" onclick="generarPDF(${index})" title="Imprimir">print</i>
+            </div>
+          `;
+            listaFacturas.appendChild(li);
+          });
+        }
+
+        // Función para calcular el total
+        function calcularTotal(precio, cantidad, impuesto) {
+          const subtotal = precio * cantidad;
+          const impuestos = subtotal * (impuesto / 100);
+          return {
+            subtotal,
+            impuestos,
+            total: subtotal + impuestos,
+          };
+        }
+
+        // Función para leer la imagen del logo y obtener sus dimensiones
+        document
+          .getElementById("logo_empresa")
+          .addEventListener("change", function (event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+              logoDataURL = e.target.result;
+
+              // Crear una imagen para obtener las dimensiones originales
+              const img = new Image();
+              img.onload = function () {
+                logoDimensions.width = img.width;
+                logoDimensions.height = img.height;
+              };
+              img.src = logoDataURL;
+            };
+
+            reader.readAsDataURL(file);
+          });
+
+        // Función para guardar factura
+        document
+          .getElementById("facturaForm")
+          .addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const nombreEmpresa =
+              document.getElementById("nombre_empresa").value;
+            const cifEmpresa = document.getElementById("cif_empresa").value;
+            const direccionEmpresa =
+              document.getElementById("direccion_empresa").value;
+            const correoEmpresa =
+              document.getElementById("correo_empresa").value;
+            const webEmpresa = document.getElementById("web_empresa").value;
+
+            const nombreCliente =
+              document.getElementById("nombre_cliente").value;
+            const cifCliente = document.getElementById("cif_cliente").value;
+
+            const numeroFactura =
+              document.getElementById("numero_factura").value;
+            const articulo = document.getElementById("articulo").value;
+            const cantidad = parseFloat(
+              document.getElementById("cantidad").value
+            );
+            const precio = parseFloat(document.getElementById("precio").value);
+            const impuesto = parseFloat(
+              document.getElementById("impuesto").value
+            );
+            const fechaFactura = document.getElementById("fecha_factura").value;
+
+            const calculos = calcularTotal(precio, cantidad, impuesto);
+
+            const factura = {
+              nombreEmpresa,
+              cifEmpresa,
+              direccionEmpresa,
+              correoEmpresa,
+              webEmpresa,
+              nombreCliente,
+              cifCliente,
+              numeroFactura,
+              articulo,
+              cantidad,
+              precio,
+              impuesto,
+              fechaFactura,
+              ...calculos,
+              logoDataURL,
+              logoDimensions,
+            };
+
+            facturas.push(factura);
+            localStorage.setItem("facturas", JSON.stringify(facturas));
+
+            mostrarFacturas();
+            event.target.reset();
+          });
+
+        // Función para editar una factura
+        window.editarFactura = function (index) {
+          const factura = facturas[index];
+
+          document.getElementById("nombre_empresa").value =
+            factura.nombreEmpresa;
+          document.getElementById("cif_empresa").value = factura.cifEmpresa;
+          document.getElementById("direccion_empresa").value =
+            factura.direccionEmpresa;
+          document.getElementById("correo_empresa").value =
+            factura.correoEmpresa;
+          document.getElementById("web_empresa").value = factura.webEmpresa;
+
+          document.getElementById("nombre_cliente").value =
+            factura.nombreCliente;
+          document.getElementById("cif_cliente").value = factura.cifCliente;
+
+          document.getElementById("numero_factura").value =
+            factura.numeroFactura;
+          document.getElementById("articulo").value = factura.articulo;
+          document.getElementById("cantidad").value = factura.cantidad;
+          document.getElementById("precio").value = factura.precio;
+          document.getElementById("impuesto").value = factura.impuesto;
+          document.getElementById("fecha_factura").value = factura.fechaFactura;
+
+          M.updateTextFields(); // Actualiza los campos de texto de Materialize
+        };
+
+        // Función para eliminar una factura
+        window.eliminarFactura = function (index) {
+          facturas.splice(index, 1);
+          localStorage.setItem("facturas", JSON.stringify(facturas));
+          mostrarFacturas();
+        };
+
+        // Función para generar PDF y descargarlo
+        window.generarPDF = function (index) {
+          const {
+            nombreEmpresa,
+            cifEmpresa,
+            direccionEmpresa,
+            correoEmpresa,
+            webEmpresa,
+            nombreCliente,
+            cifCliente,
+            numeroFactura,
+            articulo,
+            cantidad,
+            precio,
+            impuesto,
+            subtotal,
+            impuestos,
+            total,
+            fechaFactura,
+            logoDataURL,
+            logoDimensions,
+          } = facturas[index];
+
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF();
+
+          // Añadir logo
+          if (logoDataURL) {
+            const { width, height } = logoDimensions;
+
+            const maxLogoWidth = 50; // Ancho máximo permitido en el PDF
+            const maxLogoHeight = 50; // Alto máximo permitido en el PDF
+            let scaledWidth = width;
+            let scaledHeight = height;
+
+            if (width > maxLogoWidth || height > maxLogoHeight) {
+              const widthRatio = maxLogoWidth / width;
+              const heightRatio = maxLogoHeight / height;
+              const scalingFactor = Math.min(widthRatio, heightRatio);
+
+              scaledWidth = width * scalingFactor;
+              scaledHeight = height * scalingFactor;
+            }
+
+            doc.addImage(logoDataURL, "PNG", 20, 10, scaledWidth, scaledHeight);
+          }
+
+          // Espacio adicional entre el logo y el texto
+          const yOffset = 80; // Ajusta este valor para separar más el texto del logo
+
+          // Datos de la empresa
+          doc.setFontSize(10);
+          doc.text(20, yOffset, `Empresa: ${nombreEmpresa}`);
+          doc.text(20, yOffset + 5, `CIF: ${cifEmpresa}`);
+          doc.text(20, yOffset + 10, `Dirección: ${direccionEmpresa}`);
+          doc.text(20, yOffset + 15, `Correo: ${correoEmpresa}`);
+          doc.text(20, yOffset + 20, `Web: ${webEmpresa}`);
+
+          // Datos del cliente y la factura
+          doc.setFontSize(12);
+          doc.text(140, yOffset, `Factura ${numeroFactura}`);
+          doc.text(140, yOffset + 5, `Fecha: ${fechaFactura}`);
+          doc.text(140, yOffset + 15, `Cliente: ${nombreCliente}`);
+          doc.text(140, yOffset + 20, `CIF Cliente: ${cifCliente}`);
+
+          // Encabezados de la tabla de artículos
+          doc.setFontSize(10);
+          doc.text(20, yOffset + 40, `Descripción`);
+          doc.text(100, yOffset + 40, `Cantidad`);
+          doc.text(130, yOffset + 40, `Precio Unitario`);
+          doc.text(170, yOffset + 40, `Total`);
+
+          // Detalle del artículo
+          const articuloYPos = yOffset + 50;
+          doc.text(20, articuloYPos, articulo);
+          doc.text(100, articuloYPos, `${cantidad}`);
+          doc.text(130, articuloYPos, `${precio.toFixed(2)} €`);
+          doc.text(170, articuloYPos, `${(cantidad * precio).toFixed(2)} €`);
+
+          // Justificación derecha para los cálculos
+          const rightX = 190;
+          const resumenYPos = articuloYPos + 30;
+          doc.setFontSize(12);
+          doc.text(`Subtotal: ${subtotal.toFixed(2)} €`, rightX, resumenYPos, {
+            align: "right",
+          });
+          doc.text(
+            `Impuestos (${impuesto}%): ${impuestos.toFixed(2)} €`,
+            rightX,
+            resumenYPos + 10,
+            { align: "right" }
+          );
+          doc.text(
+            `Total a Pagar: ${total.toFixed(2)} €`,
+            rightX,
+            resumenYPos + 20,
+            { align: "right" }
+          );
+
+          doc.save(`factura_${numeroFactura}.pdf`);
+        };
+
+        // Mostrar facturas al cargar la página
+        mostrarFacturas();
+      });
+    </script>
+  </body>
+</html>
