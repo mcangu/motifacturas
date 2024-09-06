@@ -47,7 +47,7 @@
     <div class="container">
       <!-- Contenedor para el logo empresarial -->
       <div class="logo-empresarial">
-        <img src="logo.png" alt="Logo Empresarial" />
+        <img src="URL_DEL_LOGO_EMPRESARIAL" alt="Logo Empresarial" />
       </div>
 
       <h3 class="center-align">Generador de Facturas</h3>
@@ -140,7 +140,7 @@
 
             <div class="center">
               <button type="submit" class="btn waves-effect waves-light">
-                Generar Factura
+                Guardar Factura
               </button>
             </div>
           </form>
@@ -170,6 +170,7 @@
         const facturas = JSON.parse(localStorage.getItem("facturas")) || [];
         let logoDataURL = "";
         let logoDimensions = { width: 0, height: 0 };
+        let facturaEditadaIndex = null; // Índice para saber si se está editando una factura
 
         // Función para mostrar las facturas en el listado
         function mostrarFacturas() {
@@ -226,7 +227,7 @@
             reader.readAsDataURL(file);
           });
 
-        // Función para guardar factura
+        // Función para guardar o actualizar factura
         document
           .getElementById("facturaForm")
           .addEventListener("submit", function (event) {
@@ -278,7 +279,15 @@
               logoDimensions,
             };
 
-            facturas.push(factura);
+            // Si se está editando, actualiza la factura existente
+            if (facturaEditadaIndex !== null) {
+              facturas[facturaEditadaIndex] = factura;
+              facturaEditadaIndex = null; // Resetea el índice
+            } else {
+              // Si no, agrega una nueva factura
+              facturas.push(factura);
+            }
+
             localStorage.setItem("facturas", JSON.stringify(facturas));
 
             mostrarFacturas();
@@ -288,6 +297,7 @@
         // Función para editar una factura
         window.editarFactura = function (index) {
           const factura = facturas[index];
+          facturaEditadaIndex = index; // Guardar el índice de la factura que se está editando
 
           document.getElementById("nombre_empresa").value =
             factura.nombreEmpresa;
