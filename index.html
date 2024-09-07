@@ -290,8 +290,11 @@
 
             localStorage.setItem("facturas", JSON.stringify(facturas));
 
-            mostrarFacturas();
+            // Limpiar el formulario
             event.target.reset();
+            M.updateTextFields(); // Esto asegura que los labels se actualicen correctamente
+
+            mostrarFacturas();
           });
 
         // Función para editar una factura
@@ -321,6 +324,10 @@
           document.getElementById("fecha_factura").value = factura.fechaFactura;
 
           M.updateTextFields(); // Actualiza los campos de texto de Materialize
+
+          // Volver al tab de formulario
+          const tabs = M.Tabs.getInstance(document.querySelector(".tabs"));
+          tabs.select("formulario");
         };
 
         // Función para eliminar una factura
