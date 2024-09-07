@@ -37,9 +37,25 @@
         justify-content: space-between;
         align-items: center;
       }
+      .factura-actions {
+        display: flex;
+        justify-content: space-between;
+      }
       .factura-actions i {
         cursor: pointer;
         margin-left: 10px;
+      }
+      /* Estilos para pantallas pequeñas */
+      @media (max-width: 600px) {
+        .factura-item {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .factura-actions {
+          margin-top: 10px;
+          width: 100%;
+          justify-content: space-around;
+        }
       }
     </style>
   </head>
