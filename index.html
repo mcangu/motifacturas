@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MotiGenerador de Facturas</title>
+    <title>Generador de Facturas</title>
     <!-- Materialize CSS para Material Design -->
     <link
       href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
@@ -28,9 +28,10 @@
         text-align: center;
         margin-bottom: 20px;
       }
+      /* Ajuste para que el logo se vea a la mitad de su tamaño original */
       .logo-empresarial img {
-        max-width: 100px;
-        height: auto;
+        width: 50%; /* Ajusta el ancho del logo a la mitad */
+        height: auto; /* Mantén la proporción */
       }
       .factura-item {
         display: flex;
@@ -63,10 +64,10 @@
     <div class="container">
       <!-- Contenedor para el logo empresarial -->
       <div class="logo-empresarial">
-        <img src="logomotifacturas.png" alt="Logo Empresarial" />
+        <img src="URL_DEL_LOGO_EMPRESARIAL" alt="Logo Empresarial" />
       </div>
 
-      <h3 class="center-align">MotiGenerador de Facturas</h3>
+      <h3 class="center-align">Generador de Facturas</h3>
       <div class="row">
         <div class="col s12">
           <ul class="tabs">
@@ -418,16 +419,24 @@
           doc.text(140, yOffset + 15, `Cliente: ${nombreCliente}`);
           doc.text(140, yOffset + 20, `CIF Cliente: ${cifCliente}`);
 
+          // Dibujar barra de color azul detrás de los encabezados de la tabla
+          doc.setFillColor(0, 0, 255); // Color azul
+          doc.rect(20, yOffset + 40, 170, 10, "F"); // Rectángulo lleno de color
+
           // Encabezados de la tabla de artículos
           doc.setFontSize(10);
-          doc.text(20, yOffset + 40, `Descripción`);
-          doc.text(100, yOffset + 40, `Cantidad`);
-          doc.text(130, yOffset + 40, `Precio Unitario`);
-          doc.text(170, yOffset + 40, `Total`);
+          doc.setTextColor(255, 255, 255); // Texto en color blanco
+          doc.text(20, yOffset + 47, `Descripción`);
+          doc.text(100, yOffset + 47, `Cantidad`);
+          doc.text(130, yOffset + 47, `Precio Unitario`);
+          doc.text(170, yOffset + 47, `Total`);
+
+          // Restaurar el color del texto para los datos
+          doc.setTextColor(0, 0, 0);
 
           // Detalle del artículo
-          const articuloYPos = yOffset + 50;
-          doc.text(20, articuloYPos, articulo);
+          const articuloYPos = yOffset + 60;
+          doc.text(20, articuloYPos, articulo); // Muestra el valor del campo "articulo" en la columna "Descripción"
           doc.text(100, articuloYPos, `${cantidad}`);
           doc.text(130, articuloYPos, `${precio.toFixed(2)} €`);
           doc.text(170, articuloYPos, `${(cantidad * precio).toFixed(2)} €`);
@@ -450,6 +459,16 @@
             rightX,
             resumenYPos + 20,
             { align: "right" }
+          );
+
+          // Pie de página con el texto
+          const pageHeight = doc.internal.pageSize.height;
+          doc.setFontSize(10);
+          doc.text(
+            "Gracias por su confianza. Diseñado por MotiFacturas",
+            105,
+            pageHeight - 10,
+            { align: "center" }
           );
 
           doc.save(`factura_${numeroFactura}.pdf`);
